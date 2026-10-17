@@ -1,0 +1,340 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ファミリーカレンダー & 買い物リスト</title>
+    <!-- Web App & PWA Support -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ファミカレ">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffaf0',
+                            100: '#feebc8',
+                            500: '#ed8936',
+                            600: '#dd6b20',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Zen Maru Gothic', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #fcf8f2;
+        }
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-700 min-h-screen flex flex-col pb-10">
+
+    <!-- モード切替 & ヘッダー -->
+    <header class="bg-white border-b border-orange-100 shadow-sm sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap justify-between items-center gap-2">
+            <!-- アプリタイトル -->
+            <div class="flex items-center gap-3">
+                <div id="appLogoBg" class="bg-orange-500 text-white p-2 rounded-2xl shadow-md transition-colors">
+                    <i id="appLogoIcon" class="fa-solid fa-house-user text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide" id="appTitleText">ファミリーカレンダー</h1>
+                    <p class="text-[10px] text-slate-400 font-medium" id="appSubTitleText">家族で共有・みんなのスケジュール</p>
+                </div>
+            </div>
+
+            <!-- モード切り替えタブ -->
+            <div class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 text-xs font-bold">
+                <button id="modeFamilyBtn" onclick="switchAppMode('family')" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 bg-white text-orange-600 shadow-xs">
+                    <i class="fa-solid fa-users"></i> <span>👨‍👩‍👧‍👧 ファミリー</span>
+                </button>
+                <button id="modePrivateBtn" onclick="switchAppMode('private')" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-slate-500 hover:text-slate-800">
+                    <i class="fa-solid fa-lock"></i> <span>🔒 プライベート</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ファミリーモード用 メンバーフィルタバー -->
+        <div id="familyMemberFilterBar" class="bg-orange-50/50 border-t border-orange-100/60 px-4 py-1.5 flex items-center justify-start gap-2 overflow-x-auto">
+            <!-- JSで動的生成 -->
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-7xl mx-auto px-2 sm:px-4 py-4 flex-1 w-full space-y-4">
+
+        <!-- ========================================== -->
+        <!-- 1. 20歳までのカウントダウン カード (トップ配置) -->
+        <!-- ========================================== -->
+        <section id="familyCountdownSection" class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white rounded-3xl p-4 sm:p-5 shadow-md relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 opacity-15 text-8xl pointer-events-none">
+                <i class="fa-solid fa-cake-candles"></i>
+            </div>
+            
+            <div class="flex items-center justify-between mb-3 border-b border-white/20 pb-2">
+                <h2 class="font-bold text-base sm:text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-sparkles text-amber-200"></i>
+                    <span>🎉 20歳（成人）までのカウントダウン</span>
+                </h2>
+                <span class="text-[11px] bg-white/20 px-2.5 py-0.5 rounded-full font-medium">すくすく成長記録</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- 莉子ちゃん -->
+                <div class="bg-white/15 backdrop-blur-md rounded-2xl p-3 border border-white/20 flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <span class="font-bold text-sm">莉子 (りこ)</span>
+                            <span class="text-[10px] bg-rose-400 text-white font-bold px-1.5 py-0.2 rounded-md">2018.2.15 生</span>
+                        </div>
+                        <p class="text-[11px] text-amber-100">20歳（2038年2月15日）まで</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl sm:text-3xl font-extrabold tracking-tight text-yellow-200" id="rikoDays">----</span>
+                        <span class="text-xs font-bold ml-0.5">日</span>
+                    </div>
+                </div>
+
+                <!-- 糸ちゃん -->
+                <div class="bg-white/15 backdrop-blur-md rounded-2xl p-3 border border-white/20 flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <span class="font-bold text-sm">糸 (いと)</span>
+                            <span class="text-[10px] bg-emerald-400 text-white font-bold px-1.5 py-0.2 rounded-md">2022.10.10 生</span>
+                        </div>
+                        <p class="text-[11px] text-amber-100">20歳（2042年10月10日）まで</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl sm:text-3xl font-extrabold tracking-tight text-yellow-200" id="itoDays">----</span>
+                        <span class="text-xs font-bold ml-0.5">日</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2コラム レイアウト (左: リスト＆メモ / 右: カレンダー) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+            <!-- 左側セクション：要るものリスト・プチ用件・メモ (lg: 5列) -->
+            <div class="lg:col-span-5 space-y-4">
+
+                <!-- 2. 要るもの・買い物リスト (入力＆完了後リセット機能) -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+                            <i class="fa-solid fa-cart-shopping text-orange-500"></i>
+                            <span id="shopListTitle">要るもの・買い物リスト</span>
+                        </h3>
+                        <span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium" id="shoppingCount">0件 残り</span>
+                    </div>
+
+                    <!-- リスト追加フォーム -->
+                    <form id="shoppingForm" onsubmit="addShoppingItem(event)" class="flex gap-2">
+                        <select id="shopCategory" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                            <option value="食品">🥗 食品</option>
+                            <option value="日用品">🧻 日用品</option>
+                            <option value="学校用品">🎒 学校用品</option>
+                            <option value="その他">📦 その他</option>
+                        </select>
+                        <input type="text" id="shopTitle" placeholder="買ってくるものを入力..." required class="flex-1 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                        <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-xl text-xs font-bold transition shrink-0">
+                            追加
+                        </button>
+                    </form>
+
+                    <!-- カテゴリフィルタ -->
+                    <div class="flex items-center gap-1 overflow-x-auto py-0.5 text-xs border-b border-slate-50" id="shoppingCategoryFilter">
+                        <button type="button" onclick="filterShoppingCategory('ALL')" class="category-btn active px-2 py-1 rounded-full bg-slate-800 text-white font-medium shrink-0">すべて</button>
+                        <button type="button" onclick="filterShoppingCategory('食品')" class="category-btn px-2 py-1 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium shrink-0">🥗 食品</button>
+                        <button type="button" onclick="filterShoppingCategory('日用品')" class="category-btn px-2 py-1 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium shrink-0">🧻 日用品</button>
+                        <button type="button" onclick="filterShoppingCategory('学校用品')" class="category-btn px-2 py-1 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium shrink-0">🎒 学校</button>
+                        <button type="button" onclick="filterShoppingCategory('その他')" class="category-btn px-2 py-1 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium shrink-0">📦 その他</button>
+                    </div>
+
+                    <!-- リスト表示コンテナ -->
+                    <div class="overflow-y-auto max-h-[220px] space-y-2 pr-1" id="shoppingListContainer">
+                        <!-- JSで動的生成 -->
+                    </div>
+
+                    <!-- 完了後リセットボタン -->
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-400 text-[11px]">チェックで完了</span>
+                        <button onclick="clearCompletedShoppingItems()" class="text-orange-600 hover:text-orange-800 font-bold hover:underline transition">
+                            <i class="fa-regular fa-circle-check mr-1"></i>完了済みを一括リセット
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. プチ用件（伝言・頼み事機能） ※ファミリーモード限定 -->
+                <div id="petitTaskSection" class="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+                            <i class="fa-solid fa-comment-dots text-amber-500"></i>
+                            <span>プチ用件・伝言</span>
+                        </h3>
+                        <span class="text-[10px] text-slate-400">ちょっとした頼み事</span>
+                    </div>
+
+                    <form onsubmit="addPetitTask(event)" class="flex gap-2">
+                        <select id="taskTarget" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 focus:outline-none">
+                            <option value="shared">共有</option>
+                            <option value="papa">パパへ</option>
+                            <option value="mama">ママへ</option>
+                            <option value="kid">子供へ</option>
+                        </select>
+                        <input type="text" id="taskText" placeholder="「〇〇頼んだ」「連絡して」など" required class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none">
+                        <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-xs font-bold transition shrink-0">
+                            送信
+                        </button>
+                    </form>
+
+                    <div id="petitTaskListContainer" class="space-y-2 max-h-[160px] overflow-y-auto">
+                        <!-- JSで動的生成 -->
+                    </div>
+                </div>
+
+                <!-- 4. メモ機能 -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex flex-col gap-2">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+                            <i class="fa-solid fa-note-sticky text-amber-500"></i>
+                            <span id="memoSectionTitle">家族共有メモ</span>
+                        </h3>
+                        <span class="text-[10px] text-slate-400" id="memoStatusText">自動保存されます</span>
+                    </div>
+                    <textarea id="appMemoArea" oninput="saveMemoAuto()" rows="4" placeholder="Wi-Fiパスワード、習い事のメモ、パスワード控えなど自由に入力してください..." class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y"></textarea>
+                </div>
+
+            </div>
+
+            <!-- 右側セクション：カレンダー (lg: 7列) -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+
+                <!-- カレンダー コントロール -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-800 min-w-[140px]" id="currentMonthLabel">----年 --月</h2>
+                        <button onclick="goToToday()" class="px-3 py-1 text-xs font-semibold bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-full transition">今日</button>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-full w-9 h-9 flex items-center justify-center text-slate-600 transition" title="前月">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-full w-9 h-9 flex items-center justify-center text-slate-600 transition" title="次月">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button onclick="openEventModal()" class="ml-1 bg-orange-500 hover:bg-orange-600 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                            <i class="fa-solid fa-plus"></i> <span>予定追加</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- カレンダーグリッド -->
+                <div class="bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden flex flex-col flex-1">
+                    <div class="grid grid-cols-7 border-b border-slate-100 bg-orange-50/30 text-center font-bold text-xs py-2">
+                        <div class="text-red-500">日</div>
+                        <div class="text-slate-600">月</div>
+                        <div class="text-slate-600">火</div>
+                        <div class="text-slate-600">水</div>
+                        <div class="text-slate-600">木</div>
+                        <div class="text-slate-600">金</div>
+                        <div class="text-blue-500">土</div>
+                    </div>
+
+                    <div class="grid grid-cols-7 auto-rows-fr flex-1 divide-x divide-y divide-slate-100 min-h-[480px]" id="calendarGrid">
+                        <!-- JSで日付セル生成 -->
+                    </div>
+                </div>
+
+                <!-- 選択日の詳細予定 -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex flex-col gap-2">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm">
+                            <i class="fa-regular fa-calendar-check text-orange-500"></i>
+                            <span id="selectedDateTitle">予定一覧</span>
+                        </h3>
+                        <button onclick="openEventModalForSelectedDate()" class="text-xs text-orange-600 hover:underline font-bold">+ この日に予定追加</button>
+                    </div>
+                    <div id="selectedDateEventsList" class="max-h-40 overflow-y-auto space-y-2 pr-1">
+                        <!-- JSで動的表示 -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- モーダル：予定追加・編集 -->
+    <div id="eventModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="bg-orange-50/50 px-6 py-4 border-b border-orange-100 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 text-lg" id="modalTitle">予定の追加</h3>
+                <button onclick="closeEventModal()" class="text-slate-400 hover:text-slate-600 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="eventForm" onsubmit="saveEvent(event)" class="p-6 space-y-4">
+                <input type="hidden" id="eventId">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">予定タイトル <span class="text-red-500">*</span></label>
+                    <input type="text" id="eventTitle" required placeholder="例: 授業参観、サッカー送迎など" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">日付 <span class="text-red-500">*</span></label>
+                        <input type="date" id="eventDate" required class="w-full text-sm border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">時間</label>
+                        <input type="time" id="eventTime" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                    </div>
+                </div>
+
+                <div id="memberSelectContainer">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">担当メンバー <span class="text-red-500">*</span></label>
+                    <select id="eventMember" class="w-full text-sm border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                        <!-- JSで動的生成 -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 
